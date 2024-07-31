@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "pcap-test.h"
+#include <stdint.h>
 
 void usage() {
 	printf("syntax: pcap-test <interface>\n");
@@ -25,6 +26,49 @@ bool parse(Param* param, int argc, char* argv[]) {
 	return true;
 }
 
+void eth_header(const uint8_t* packet) {
+	struct eth_header* eth = (struct eth_header*)packet;
+	printf("---ethernet header---\n");
+	printf("src mac: ");
+	for (int i = 0; i < 6; i++) {
+		printf("%02x", eth->src_mac[i]);
+		if (i != 5) printf(":");
+	}
+	printf("\n");
+	printf("dst mac: ");
+	for (int i = 0; i < 6; i++) {
+		printf("%02x", eth->dst_mac[i]);
+		if (i != 5) printf(":");
+	}
+	printf("\n");
+	ipv4_header(packet + sizeof(struct eth_header));
+}
+
+void ipv4_header(const uint8_t* packet) {
+	struct ipv4_header* ip = (struct ipv4_header*)packet;
+	printf("---ipv4 header---\n");
+	printf("src ip: ");
+	for (int i = 0; i < 4; i++) {
+		printf("%d", ip->src_ip[i]);
+		if (i != 3) printf(".");
+	}
+	printf("\n");
+	printf("dst ip: ");
+	for (int i = 0; i < 4; i++) {
+		printf("%d", ip->dst_ip[i]);
+		if (i != 3) printf(".");
+	}
+	printf("\n");
+	tcp_header(packet + sizeof(struct ipv4_header));
+}
+
+void tcp_header(const uint8_t* packet) {
+	struct tcp_header* tcp = (struct tcp_header*)packet;
+	printf("---tcp header---\n");
+	printf("src port: %d\n", ntohs(tcp->src_port));
+	printf("dst port: %d\n", ntohs(tcp->dst_port));
+}
+
 int main(int argc, char* argv[]) {
 	if (!parse(&param, argc, argv))
 		return -1;
@@ -35,17 +79,21 @@ int main(int argc, char* argv[]) {
 		fprintf(stderr, "pcap_open_live(%s) return null - %s\n", param.dev_, errbuf);
 		return -1;
 	}
-
+	
+	int cnt = 1;
 	while (true) {
 		struct pcap_pkthdr* header;
-		const u_char* packet;
+		const uint8_t* packet;
 		int res = pcap_next_ex(pcap, &header, &packet);
 		if (res == 0) continue;
 		if (res == PCAP_ERROR || res == PCAP_ERROR_BREAK) {
 			printf("pcap_next_ex return %d(%s)\n", res, pcap_geterr(pcap));
 			break;
 		}
+		printf("----------------------------\n");
+		printf("packet num: %d\n", cnt++);
 		printf("%u bytes captured\n", header->caplen);
+		eth_header(packet);
 	}
 
 	pcap_close(pcap);
