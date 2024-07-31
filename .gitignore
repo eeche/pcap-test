@@ -2,4 +2,4 @@
 *.stash
 *.user
 *.pcap
-*.exe
+pcap-test
