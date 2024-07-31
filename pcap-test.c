@@ -28,6 +28,14 @@ bool parse(Param* param, int argc, char* argv[]) {
 
 void eth_header(const uint8_t* packet) {
 	struct eth_header* eth = (struct eth_header*)packet;
+	struct ipv4_header* ip = (struct ipv4_header*)(packet + sizeof(struct eth_header));
+
+	if (ip->protocol != 0x06) {
+		printf("Not TCP\n");
+		return;
+	}
+
+	printf("----------------------------\n");
 	printf("---ethernet header---\n");
 	printf("src mac: ");
 	for (int i = 0; i < 6; i++) {
@@ -90,9 +98,6 @@ int main(int argc, char* argv[]) {
 			printf("pcap_next_ex return %d(%s)\n", res, pcap_geterr(pcap));
 			break;
 		}
-		printf("----------------------------\n");
-		printf("packet num: %d\n", cnt++);
-		printf("%u bytes captured\n", header->caplen);
 		eth_header(packet);
 	}
 
