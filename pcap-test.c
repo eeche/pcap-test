@@ -75,6 +75,16 @@ void tcp_header(const uint8_t* packet) {
 	printf("---tcp header---\n");
 	printf("src port: %d\n", ntohs(tcp->src_port));
 	printf("dst port: %d\n", ntohs(tcp->dst_port));
+	payload(packet + sizeof(struct tcp_header));
+}
+
+void payload(const uint8_t* packet) {
+	struct payload* data = (struct payload*)packet;
+	printf("---payload---\n");
+	for (int i = 0; i < 20; i++) {
+		printf("%02x ", data->data[i]);
+	}
+	printf("\n");
 }
 
 int main(int argc, char* argv[]) {
