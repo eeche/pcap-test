@@ -67,9 +67,12 @@ void ipv4_header(const uint8_t* packet) {
 		if (i != 3) printf(".");
 	}
 	printf("\n");
+	// ip header는 가변적이므로 ip header의 길이를 구해서(ip header의 길이는 ip_hl * 4) tcp header로 넘겨준다.
 	tcp_header(packet + sizeof(struct ipv4_header));
 }
 
+// tcp header의 크기를 구하기 위해서 caplen에서 ip header의 길이를 빼주면 스위치를 통과하면 tag가 붙어서 이렇게 하면 안됨
+// ip header에서 total packet length에서 ip header의 길이를 빼주면 tcp header의 길이가 나온다.
 void tcp_header(const uint8_t* packet) {
 	struct tcp_header* tcp = (struct tcp_header*)packet;
 	printf("---tcp header---\n");
@@ -83,6 +86,7 @@ void payload(const uint8_t* packet) {
 	printf("---payload---\n");
 	for (int i = 0; i < 20; i++) {
 		printf("%02x ", data->data[i]);
+		if (i == 9) printf("\n");
 	}
 	printf("\n");
 }
